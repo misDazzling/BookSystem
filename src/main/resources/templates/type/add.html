@@ -1,0 +1,72 @@
+
+<h3>添加分类</h3>
+
+<!-- 图书名, 价格, 出版社, 出版时间, 图书分类 -->
+
+<form class="layui-form" action="" >
+	
+	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">分类名称</label>
+		<div class="layui-input-inline">
+			<input type="text" name="name" class="layui-input"
+				placeholder="请输入分类名">
+		</div>
+	</div>
+
+	
+
+	
+	<div class="layui-from-item">
+		<div class="layui-input-block">
+			<button class="layui-btn" lay-submit lay-filter="add" >添加分类</button>
+		</div>
+	</div>
+	
+</form>
+
+
+<script type="text/javascript">
+
+	layui.use(['form'], function(){
+		var form = layui.form;
+      
+		
+		
+    form.on('submit(add)', function(data){
+			
+			//alert(JSON.stringify(data.field));
+			// ajax
+			$.ajax({
+				url : '/type/add',	// 请求的路径
+				data : data.field,		// 传递的参数
+				type : 'post',			// 请求的方式
+				dataType : 'json',		// 返回的类型
+				success : function(data){// 成功的回调
+					
+					if (data.code == 0){
+						// 成功了, 跳转到列表
+						gotoURL('/type/list');
+					} else {
+						// 失败了
+						layer.msg(data.msg);
+					}
+				},
+				error : function(){		// 失败的回调
+					layer.msg("请求失败");
+				}
+			});
+			
+			return false;	// 阻止原来的表单提交动作.
+		});
+		
+		
+	});
+
+</script>
+
+
+
+
+
+

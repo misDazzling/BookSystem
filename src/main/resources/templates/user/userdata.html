@@ -1,0 +1,156 @@
+
+<h3>用户信息</h3> 
+
+<!-- 表格显示项目信息 -->
+<table id="table" lay-filter="table"></table>
+
+
+<!-- 修改的表单 -->
+<script type="text/html" id="edit">
+	<form class="layui-form" id="edit-form">
+
+		<input type="hidden" name="id" >
+		
+      <!-- 用户名, 密码, 真实姓名, 手机号码,头像 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">用户名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="username" class="layui-input" readonly="readonly"
+				 placeholder="请输入用户名" >
+		</div>
+	</div>
+	
+	<div class="layui-form-item">
+		<label class="layui-form-label">密码</label>
+		<div class="layui-input-inline">
+			<input type="password" name="password" class="layui-input"
+				 placeholder="请输入密码" >
+		</div>
+	</div>
+	
+	<div class="layui-form-item">
+		<label class="layui-form-label">真实姓名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="realname" class="layui-input"
+				 placeholder="请输入真实姓名" >
+		</div>
+	</div>
+	
+	<div class="layui-form-item">
+		<label class="layui-form-label">手机号</label>
+		<div class="layui-input-inline">
+			<input type="text" name="phone" class="layui-input"
+				 placeholder="请输入手机号"  >
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">头像</label>
+		<div class="layui-input-inline">
+			<input type="file" name="head" class="layui-input"
+				 placeholder="请选择文件" >
+		</div>
+	</div>
+	 
+	<div class="layui-form-item">
+		<div class="layui-input-block">
+			<button class="layui-btn" lay-submit lay-filter="add">编辑用户</button>
+		</div>
+	</div>
+
+	</form>
+</script>
+<!-- 行工具条 -->
+<script type="text/html" id="row-bar">
+	
+	<a class="layui-btn layui-btn-sm" lay-event="edit">
+		<i class="layui-icon layui-icon-edit" ></i>
+		编辑
+	</a>
+</script>
+
+<!-- JS -->
+<script>
+	layui.use(['table','form'], function(){
+		 table = layui.table;
+		form = layui.form;
+		form.render();
+		table.render({
+			elem: "#table",	// 需要渲染的标签
+			url: '/user/userdata', 	// 数据的请求地址
+			method: 'post', 		// 请求方式
+			page: true,		// 开启分页
+			cols: [ [	// 每一个列
+				{field: 'id', title: 'ID'},
+				{field: 'username', title: '用户名'},
+				{field: 'password', title: '密码'},
+				{field: 'realname', title: '真实姓名'},
+				{field: 'phone', title: '电话号码'},
+				
+				{title: '操作', toolbar: '#row-bar'},
+			] ],
+			parseData: function(res){
+				return {
+					'code': res.code,
+					'msg': res.msg,
+					'count': res.data.total,
+					'data': res.data.list
+				};
+			}
+		});
+		
+		// 绑定事件
+		table.on('tool(table)', function(obj){
+			 if (obj.event == 'edit'){
+				//弹出的窗口
+				var layIndex =	layer.open({
+						type: 1,
+						title: '编辑用户',
+						content: $('#edit').html(),
+						
+					});
+				
+				
+					//数据应该是obj.data
+					$("#edit-form input[name='id']").val(obj.data.id);
+					$("#edit-form input[name='username']").val(obj.data.username);
+			
+					$("#edit-form input[name='realname']").val(obj.data.realname);
+					$("#edit-form input[name='phone']").val(obj.data.phone);
+				
+							
+					
+						
+					
+				
+					
+				
+					form.on('submit(add)', function(data){
+						
+						$.ajax({
+							url : '/user/edit',
+							data :  data.field,
+							type : 'post',
+							dataType : 'json',
+							success : function(data){
+								// 判断成功失败
+								if (data.code == 0){
+									layer.close(layIndex);
+								} else {
+									layer.msg(data.msg);
+								}
+								
+								// 刷新表格
+								table.reload("table");
+							},
+							error : function(){
+								alert("请求失败");
+							}
+						});
+						
+						return false;
+					});
+			}
+		});
+	});
+
+</script>

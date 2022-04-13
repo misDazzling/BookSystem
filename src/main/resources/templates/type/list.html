@@ -1,0 +1,143 @@
+
+<h3>图书列表</h3> 
+
+<!-- 表格显示项目信息 -->
+<table id="type" lay-filter="type"></table>
+
+<!-- 修改的表单 -->
+<script type="text/html" id="edit">
+	<form class="layui-form" id="edit-form">
+
+		<input type="hidden" name="id" >
+		
+      <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">分类名称</label>
+		<div class="layui-input-inline">
+			<input type="text" name="name" class="layui-input"
+				placeholder="请输入分类名">
+		</div>
+	</div>
+
+	
+		
+		<div class="layui-from-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit lay-filter="edit" >修改分类</button>
+			</div>
+		</div>
+	</form>
+</script>
+<!-- 删除和编辑按钮 -->
+<script type="text/html" id="bar">
+	<a class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">删除</a>
+	<a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+</script>
+
+
+<!-- JS -->
+<script>
+	layui.use(['table','form'], function(){
+		var table = layui.table;
+		form = layui.form;
+		form.render();
+		table.render({
+			elem: "#type",	// 需要渲染的标签
+			url: '/type/list', 	// 数据的请求地址
+			method: 'post', 		// 请求方式
+			page: true,		// 开启分页
+			cols: [ [	// 每一个列
+				{field: 'id', title: 'ID'},
+				{field: 'name', title: '分类名字'},
+				
+				{title: '操作', toolbar: '#bar', width: 150, fixed: 'right'},
+			] ],
+			parseData: function(res){
+				return {
+					'code': res.code,
+					'msg': res.msg,
+					'count': res.data.total,
+					'data': res.data.list
+				};
+			}
+		});
+		
+		// 绑定事件
+		table.on('tool(type)', function(obj){
+			if (obj.event == 'delete'){
+				//alert('删除' + JSON.stringify(obj.data.id))
+				layer.confirm('你确定要删除这一条么!', function(index){
+					// 通过ajax 向服务器发送请求, 完成删除操作
+					$.ajax({
+						url : '/type/delete',	// 请求的地址 
+						data : {id: obj.data.id},	// 传递的参数
+						type : 'post',	// 请求的类型
+						dataType : 'json',	// 返回的类型
+						success : function(data){
+							if (data.code == 0){
+								layer.msg('删除成功');
+							} else {
+								layer.msg('删除失败');
+							}
+							
+							// 刷新表格
+							table.reload('type', {
+								where: obj.field,
+								
+							});
+							
+							
+						},	// 成功的回调
+						error : function(){
+							alert("请求失败");
+						}	// 失败的回调
+					});
+					
+					// 关闭
+					layer.close(index);
+				});
+				
+			} else if (obj.event == 'edit'){
+				//弹出的窗口
+			var layIndex =	layer.open({
+					type: 1,
+					title: '编辑分类',
+					content: $('#edit').html(),
+					
+				});
+				//数据应该是obj.data
+				$("#edit-form input[name='id']").val(obj.data.id);
+				$("#edit-form select[name='type_id'] option[value='"+obj.data.state+"']").attr("selected", "selected");
+			
+				form.on('submit(edit)', function(data){
+					
+					$.ajax({
+						url : '/type/edit',
+						data :  data.field,
+						type : 'post',
+						dataType : 'json',
+						success : function(data){
+							// 判断成功失败
+							if (data.code == 0){
+								layer.close(layIndex);
+							} else {
+								layer.msg(data.msg);
+							}
+							
+							// 刷新表格
+							table.reload("type");
+						},
+						error : function(){
+							alert("请求失败");
+						}
+					});
+					
+					return false;
+				});
+				
+			
+			}
+		});
+	});
+
+</script>

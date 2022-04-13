@@ -1,0 +1,224 @@
+
+<h3>借阅图书列表</h3>
+
+<form class="layui-form" action="">
+
+	<div class="layui-form-item">
+		
+		<div class="layui-input-inline">
+			<input type="text" name="key" class="layui-input" placeholder="请输入查询关键字">
+		</div>
+		<div class="layui-input-inline">
+			<select name="type_id">
+				<option value="">请选择分类</option>
+				<option th:each="type : ${types}" th:value="${type.id}" th:text="${type.name}"></option>
+			</select>
+		</div>
+		<div class="layui-input-inline">
+			<button class="layui-btn" lay-submit lay-filter="search">搜索</button>
+		</div>
+	</div>
+</form>
+
+<!-- 显示借阅图书列表的表格 -->
+<table id="borrow" lay-filter="borrow"></table>
+
+<!-- 借阅的表单 -->
+<script type="text/html" id="add">
+	<form class="layui-form" id="edit-form">
+       
+		 <div class="layui-form-item">
+		<label class="layui-form-label">用户ID</label>
+		<div class="layui-input-inline">
+			 <input type="text" name="user_id" class="layui-input" readonly="readonly"  th:value="${user.id}" 
+				placeholder="请输入用户ID">
+		</div>
+	</div>
+
+      <div class="layui-form-item">
+		<label class="layui-form-label">用户名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_name" class="layui-input"  readonly="readonly"   th:value="${user.username}" 
+				placeholder="请输入用户名">
+		</div>
+	</div>
+
+      
+      <div class="layui-form-item">
+		<label class="layui-form-label">图书ID</label>
+		<div class="layui-input-inline">
+			 <input type="text" name="book_id" class="layui-input" readonly="readonly"  
+				placeholder="请输入图书ID">
+		</div>
+	</div>
+
+      <div class="layui-form-item">
+		<label class="layui-form-label">图书名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="book_name" class="layui-input"  readonly="readonly"  
+				placeholder="请输入图书名">
+		</div>
+	</div>
+
+		<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">借阅日期</label>
+		<div class="layui-input-inline">
+			<input type="text" name="borrow_time" class="layui-input"  
+				placeholder="请输入借阅日期" id="borrow_time">
+		</div>
+	</div>
+
+    	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">应还日期</label>
+		<div class="layui-input-inline">
+			<input type="text" name="return_time" class="layui-input" 
+				placeholder="请输入应还日期" id="return_time">
+		</div>
+	</div>
+
+			<input type="hidden" name="state" value="未还" class="layui-input">
+	
+	  	
+    
+   
+		
+		<div class="layui-from-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit lay-filter="add" >借阅图书</button>
+			</div>
+		</div>
+	</form>
+</script>
+
+<!-- 删除和编辑按钮 -->
+<script type="text/html" id="bar">
+
+	<a class="layui-btn layui-btn-sm" lay-event="add">借阅</a>
+</script>
+
+
+
+<!-- JS -->
+<script type="text/javascript">
+	layui.use(['table', 'form','laydate'], function(){
+		var table = layui.table,
+		form = layui.form;
+         
+		form.render();
+		
+		form.on('submit(search)', function(obj){
+						
+			// 刷新表格
+			table.reload('borrow', {
+				where: obj.field,
+				page: {curr : 1}	// 从第1页开始
+			});
+			
+			
+			return false;
+		});
+		
+		table.render({
+			elem : '#borrow',
+			url : '/book/list',
+			method : 'post',
+			page : true,
+			cols : [ [	// 两个方括号中间一定要有一个空格
+				{field: 'id', title: 'ID'},
+				{field: 'title', title: '图书名称'},
+				{field: 'price', title: '价格'},
+				{field: 'publish', title: '出版社'},
+				{field: 'publish_time', title: '出版时间'},
+				{field: 'authors', title: '作者'},
+				{field: 'type_name', title: '分类'},
+				{title: '操作', toolbar: '#bar', width: 150, fixed: 'right'},
+			] ],
+			parseData : function (res){
+				return {'code' : res.code,
+					'msg' : res.msg,
+					'count' : res.data.total,
+					'data' : res.data.list,
+					}
+				
+			}
+		});
+		
+		// 绑定事件
+		table.on('tool(borrow)', function(obj){
+			 if (obj.event == 'add'){
+				// 弹出的窗口
+				var layIndex = layer.open({
+					type: 1,
+					title: '借阅图书',
+					content: $('#add').html(),
+				});
+				laydate = layui.laydate;
+				
+				laydate.render({elem: '#borrow_time', type: 'date'});
+				laydate.render({elem: '#return_time'});
+				// 数据应该是obj.data
+				$("#edit-form input[name='book_id']").val(obj.data.id);
+				$("#edit-form input[name='book_name']").val(obj.data.title);
+				
+			
+
+				// 选中指定的类型
+				$("#edit-form select[name='type_id'] option[value='"+obj.data.type_id+"']").attr("selected", "selected");
+				// 获取当前分类的图书信息
+				$.ajax({
+					url : '/book/getByType',
+					data : {type_id: obj.data.type_id},
+					type : 'post',
+					dataType : 'json',
+					success : function (data){
+						var html = "<option value=''>请选择</option>";
+						
+						$.each(data.data, function(index, item){
+							// 如果是当前员工, 则不显示在下拉列表中
+							if (item.id == obj.data.id) return;
+							if (item.id == obj.data.name){
+								html += '<option value="'+item.id+'" selected="selected">'+item.name+'</option>';
+							} else {
+								html += '<option value="'+item.id+'">'+item.name+'</option>';
+							}
+						});
+						
+						$("#edit-form select[name='name']").html(html);
+						
+						form.render();
+						// 编写表单提交事件
+						form.on('submit(add)', function(data){
+							
+							$.ajax({
+								url : '/borrow/add',
+								data : data.field,
+								type : 'post',
+								dataType : 'json',
+								success : function(data){
+									// 判断成功失败
+									if (data.code == 0){
+										layer.close(layIndex);
+									} else {
+										layer.msg(data.msg);
+									}
+									
+									// 刷新表格
+									table.reload("borrow");
+								},
+								error : function(){
+									alert("请求失败");
+								}
+							});
+							
+							return false;
+						});
+					}
+				});
+				
+				form.render();
+			}
+		});
+	});
+</script>

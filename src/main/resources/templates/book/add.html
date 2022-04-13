@@ -1,0 +1,128 @@
+
+<h3>添加图书</h3>
+
+<!-- 图书名, 价格, 出版社, 出版时间, 图书分类 -->
+
+<form class="layui-form" action="" >
+	
+	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">图书名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="title" class="layui-input"
+				placeholder="请输入图书名">
+		</div>
+	</div>
+
+	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">价格</label>
+		<div class="layui-input-inline">
+			<input type="text" name="price" class="layui-input"
+				placeholder="请输入图书价格">
+		</div>
+	</div>
+	
+   <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">出版社</label>
+		<div class="layui-input-inline">
+			<input type="text" name="publish" class="layui-input"
+				placeholder="请输入图书出版社">
+		</div>
+	</div>
+	
+	 <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">出版时间</label>
+		<div class="layui-input-inline">
+			<input type="text" name="publish_time" class="layui-input"
+				 placeholder="请输入出版时间" id="publish_time">
+		</div>
+	</div>
+	
+	 <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">作者</label>
+		<div class="layui-input-inline">
+			<input type="text" name="authors" class="layui-input"
+				 placeholder="请输入作者" >
+		</div>
+	</div>
+	
+	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">图书分类</label>
+		<div class="layui-input-inline">
+			<select name="type_id" lay-filter="type_id"> 
+				<option value="">请选择</option>
+				<option th:each="type : ${types}"
+					 th:value="${type.id}" 
+					 th:text="${type.name}"></option>
+			</select>
+		</div>
+	</div>
+   
+   	<!-- 一个行 -->
+   	
+	
+  
+
+
+	
+	<div class="layui-from-item">
+		<div class="layui-input-block">
+			<button class="layui-btn" lay-submit lay-filter="add" >添加图书</button>
+		</div>
+	</div>
+	
+</form>
+
+
+<script type="text/javascript">
+
+	layui.use(['form','laydate'], function(){
+		var form = layui.form;
+       laydate = layui.laydate;
+		
+		laydate.render({elem: '#publish_time', type: 'date'});
+		form.render();
+		
+		
+form.on('submit(add)', function(data){
+			
+			//alert(JSON.stringify(data.field));
+			// ajax
+			$.ajax({
+				url : '/book/add',	// 请求的路径
+				data : data.field,		// 传递的参数
+				type : 'post',			// 请求的方式
+				dataType : 'json',		// 返回的类型
+				success : function(data){// 成功的回调
+					
+					if (data.code == 0){
+						// 成功了, 跳转到列表
+						gotoURL('/book/list');
+					} else {
+						// 失败了
+						layer.msg(data.msg);
+					}
+				},
+				error : function(){		// 失败的回调
+					layer.msg("请求失败");
+				}
+			});
+			
+			return false;	// 阻止原来的表单提交动作.
+		});
+		
+		
+	});
+
+</script>
+
+
+
+
+
+

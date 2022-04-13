@@ -1,0 +1,70 @@
+<form class="layui-form" action="">
+
+	<div class="layui-form-item">
+		
+		
+		<div class="layui-input-inline">
+			<select name="key">
+				<option value="">请选择分类</option>
+				<option th:value="未还" th:text="未还"></option>
+				<option th:value="已还" th:text="已还"></option>
+				<option th:value="逾期" th:text="逾期"></option>
+			</select>
+		</div>
+		<div class="layui-input-inline">
+			<button class="layui-btn" lay-submit lay-filter="search">搜索</button>
+		</div>
+	</div>
+</form>
+
+<!-- 显示借阅图书列表的表格 -->
+<table id="borrow" lay-filter="borrow"></table>
+<!-- JS -->
+<script type="text/javascript">
+	layui.use(['table', 'form','laydate'], function(){
+		var table = layui.table,
+		form = layui.form;
+         
+		form.render();
+		
+		form.on('submit(search)', function(obj){
+			
+			// 刷新表格
+			table.reload('borrow', {
+				where: obj.field,
+				page: {curr : 1}	// 从第1页开始
+			});
+			
+			
+			return false;
+		});
+		
+		table.render({
+			elem : '#borrow',
+			url : '/borrow/userlist',
+			method : 'post',
+			page : true,
+			cols : [ [	// 两个方括号中间一定要有一个空格
+				{field: 'id', title: 'ID'},
+				{field: 'user_id', title: '用户ID'},
+				{field: 'user_name', title: '用户名'},
+				{field: 'book_id', title: '图书ID'},
+				{field: 'book_name', title: '图书名称'},
+				{field: 'borrow_time', title: '借阅日期'},
+				{field: 'return_time', title: '应还日期'},
+				{field: 'state', title: '状态'},
+			
+			] ],
+			parseData : function (res){
+				return {'code' : res.code,
+					'msg' : res.msg,
+					'count' : res.data.total,
+					'data' : res.data.list,
+					}
+				
+			}
+		});
+		
+		
+	});
+</script>

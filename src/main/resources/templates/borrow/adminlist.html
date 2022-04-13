@@ -1,0 +1,205 @@
+<form class="layui-form" action="">
+
+	<div class="layui-form-item">
+		
+		
+		<div class="layui-input-inline">
+			<select name="key">
+				<option value="">请选择分类</option>
+				<option th:value="未还" th:text="未还"></option>
+				<option th:value="已还" th:text="已还"></option>
+				<option th:value="逾期" th:text="逾期"></option>
+			</select>
+		</div>
+		<div class="layui-input-inline">
+			<button class="layui-btn" lay-submit lay-filter="search">搜索</button>
+		</div>
+	</div>
+</form>
+
+<!-- 显示借阅图书列表的表格 -->
+<table id="borrow" lay-filter="borrow"></table>
+
+
+
+<!-- 修改的表单 -->
+<script type="text/html" id="edit">
+	<form class="layui-form" id="edit-form">
+       
+		<input type="hidden" name="id" >
+	   	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">用户ID</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_id" class="layui-input" readonly="readonly"
+				placeholder="请输入用户ID">
+		</div>
+	</div>
+   
+    	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">用户名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_name" class="layui-input" readonly="readonly"
+				placeholder="请输入用户名">
+		</div>
+	</div>
+
+   	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">图书ID</label>
+		<div class="layui-input-inline">
+			<input type="text" name="book_id" class="layui-input" readonly="readonly"
+				placeholder="请输入图书ID">
+		</div>
+	</div>
+    
+   	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">图书名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="book_name" class="layui-input" readonly="readonly"
+				placeholder="请输入图书名">
+		</div>
+	</div>
+   		<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">借阅日期</label>
+		<div class="layui-input-inline">
+			<input type="text" name="borrow_time" class="layui-input" readonly="readonly"
+				placeholder="请输入借阅日期">
+		</div>
+	</div>
+
+    	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">应还日期</label>
+		<div class="layui-input-inline">
+			<input type="text" name="return_time" class="layui-input" readonly="readonly"
+				placeholder="请输入应还日期">
+		</div>
+	</div>
+	 
+
+  <div class="layui-form-item">
+    <label class="layui-form-label">借阅状态</label>
+    <div class="layui-input-block">
+      <input type="radio" name="state" value="未还" title="未还">
+      <input type="radio" name="state" value="已还" title="已还" >
+      <input type="radio" name="state" value="逾期" title="逾期" >
+    </div>
+  </div>
+
+		<div class="layui-from-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit lay-filter="edit" >修改</button>
+			</div>
+		</div>
+	</form>
+</script>
+
+<!-- 删除和编辑按钮 -->
+<script type="text/html" id="bar">
+	
+	<a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+</script>
+<!-- JS -->
+<script type="text/javascript">
+	layui.use(['table', 'form','laydate'], function(){
+		var table = layui.table,
+		form = layui.form;
+         
+		form.render();
+		
+		form.on('submit(search)', function(obj){
+			
+			// 刷新表格
+			table.reload('borrow', {
+				where: obj.field,
+				page: {curr : 1}	// 从第1页开始
+			});
+			
+			
+			return false;
+		});
+		
+		table.render({
+			elem : '#borrow',
+			url : '/borrow/adminlist',
+			method : 'post',
+			page : true,
+			cols : [ [	// 两个方括号中间一定要有一个空格
+				{field: 'id', title: 'ID'},
+				{field: 'user_id', title: '用户ID'},
+				{field: 'user_name', title: '用户名'},
+				{field: 'book_id', title: '图书ID'},
+				{field: 'book_name', title: '图书名称'},
+				{field: 'borrow_time', title: '借阅日期'},
+				{field: 'return_time', title: '应还日期'},
+				{field: 'state', title: '状态'},
+				{title: '操作', toolbar: '#bar', width: 150, fixed: 'right'},
+			
+			] ],
+			parseData : function (res){
+				return {'code' : res.code,
+					'msg' : res.msg,
+					'count' : res.data.total,
+					'data' : res.data.list,
+					}
+				
+			}
+		});
+		// 绑定事件
+		table.on('tool(borrow)', function(obj){
+			 if (obj.event == 'edit'){
+				//弹出的窗口
+			var layIndex =	layer.open({
+					type: 1,
+					title: '编辑借阅状态',
+					content: $('#edit').html(),
+					
+				});
+			
+		
+			form.render();//渲染 单选框  layui中单选框是不会被自动渲染的 ，需要在显示之前进行手动渲染
+			// 数据应该是obj.data
+			$("#edit-form input[name='id']").val(obj.data.id);
+			$("#edit-form input[name='user_id']").val(obj.data.id);
+			$("#edit-form input[name='user_name']").val(obj.data.user_name);
+			$("#edit-form input[name='book_id']").val(obj.data.book_id);
+			$("#edit-form input[name='book_name']").val(obj.data.book_name);
+			$("#edit-form input[name='borrow_time']").val(obj.data.borrow_time);
+			$("#edit-form input[name='return_time']").val(obj.data.return_time);
+			form.render();
+		  form.on('submit(edit)', function(data){
+					
+					$.ajax({
+						url : '/borrow/edit',
+						data :  data.field,
+						type : 'post',
+						dataType : 'json',
+						success : function(data){
+							// 判断成功失败
+							if (data.code == 0){
+								layer.close(layIndex);
+							} else {
+								layer.msg(data.msg);
+							}
+							
+							// 刷新表格
+							table.reload("borrow");
+						},
+						error : function(){
+							alert("请求失败");
+						}
+					});
+					
+					return false;
+				});
+				
+			
+			}
+		});
+		
+	});
+</script>

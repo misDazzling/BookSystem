@@ -1,0 +1,145 @@
+
+<h3>公告列表</h3> 
+
+<!-- 表格显示项目信息 -->
+<table id="table" lay-filter="table"></table>
+
+
+<!-- 修改的表单 -->
+<script type="text/html" id="edit">
+	<form class="layui-form" id="edit-form">
+
+		<input type="hidden" name="id" >
+		
+      <!-- 用户ID, 用户名, 内容, 发布时间 -->
+   <div class="layui-form-item">
+		<label class="layui-form-label">用户ID</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_id" class="layui-input" readonly="readonly"
+				 placeholder="请输入用户ID" >
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">用户名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_name" class="layui-input" readonly="readonly"
+				 placeholder="请输入用户名" >
+		</div>
+	</div>
+	
+	
+	  <div class="layui-form-item layui-form-text">
+    <label class="layui-form-label">内容</label>
+    <div class="layui-input-block">
+      <textarea name="content" placeholder="请输入内容" class="layui-textarea" readonly="readonly"></textarea>
+    </div>
+	
+	<div class="layui-form-item">
+		<label class="layui-form-label">发布时间</label>
+		<div class="layui-input-inline">
+			<input type="text" name="time" class="layui-input" readonly="readonly"
+				 placeholder="请输入发布时间" id="time" >
+		</div>
+
+	 
+	
+
+	</form>
+</script>
+<!-- 行工具条 -->
+<script type="text/html" id="row-bar">
+	
+	<a class="layui-btn layui-btn-sm" lay-event="look">
+		<i class="layui-icon layui-icon-edit" ></i>
+		查看
+	</a>
+</script>
+
+<!-- JS -->
+<script>
+	layui.use(['table','form','laydate'], function(){
+		 table = layui.table;
+		form = layui.form;
+		form.render();
+		table.render({
+			elem: "#table",	// 需要渲染的标签
+			url: '/notice/list', 	// 数据的请求地址
+			method: 'post', 		// 请求方式
+			page: true,		// 开启分页
+			cols: [ [	// 每一个列
+				{field: 'id', title: 'ID'},
+				{field: 'user_id', title: '发布者ID'},
+				{field: 'user_name', title: '发布者'},
+				{field: 'content', title: '内容'},
+				{field: 'time', title: '发布时间'},
+				{title: '操作', toolbar: '#row-bar'},
+			] ],
+			parseData: function(res){
+				return {
+					'code': res.code,
+					'msg': res.msg,
+					'count': res.data.total,
+					'data': res.data.list
+				};
+			}
+		});
+		
+		// 绑定事件
+		table.on('tool(table)', function(obj){
+			 if (obj.event == 'look'){
+				//弹出的窗口
+				
+				var layIndex =	layer.open({
+						type: 1,
+						title: '公告详情',
+						content: $('#edit').html(),
+						area: ['500px', '400px']
+						
+					});
+			
+				
+					//数据应该是obj.data
+					$("#edit-form input[name='id']").val(obj.data.id);
+					$("#edit-form input[name='user_id']").val(obj.data.user_id);
+					$("#edit-form input[name='user_name']").val(obj.data.user_name);
+			
+					$("#edit-form textarea[name='content']").val(obj.data.content);
+					$("#edit-form input[name='time']").val(obj.data.time);
+				
+							
+					
+						
+					
+				
+					
+				
+					form.on('submit(edit)', function(data){
+						
+						$.ajax({
+							url : '/notice/edit',
+							data :  data.field,
+							type : 'post',
+							dataType : 'json',
+							success : function(data){
+								// 判断成功失败
+								if (data.code == 0){
+									layer.close(layIndex);
+								} else {
+									layer.msg(data.msg);
+								}
+								
+								// 刷新表格
+								table.reload("table");
+							},
+							error : function(){
+								alert("请求失败");
+							}
+						});
+						
+						return false;
+					});
+			}
+		});
+	});
+
+</script>

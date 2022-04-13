@@ -1,0 +1,89 @@
+
+<h3>添加公告</h3>
+
+<!-- 表单 -->
+<div class="layui-form">
+<form class="layui-form" action="">
+      
+	  <!-- 用户ID, 用户名, 内容, 发布时间 -->
+   <div class="layui-form-item">
+		<label class="layui-form-label">用户ID</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_id" class="layui-input" readonly="readonly" th:value="${user.id}" 
+				 placeholder="请输入用户ID" >
+		</div>
+	</div>
+	<div class="layui-form-item">
+		<label class="layui-form-label">用户名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="user_name" class="layui-input" readonly="readonly" th:value="${user.username}" 
+				 placeholder="请输入用户名" >
+		</div>
+	</div>
+	
+	
+	  <div class="layui-form-item layui-form-text">
+    <label class="layui-form-label">内容</label>
+    <div class="layui-input-block">
+      <textarea name="content" placeholder="请输入内容" class="layui-textarea"></textarea>
+    </div>
+	
+	<div class="layui-form-item">
+		<label class="layui-form-label">发布时间</label>
+		<div class="layui-input-inline">
+			<input type="text" name="time" class="layui-input"
+				 placeholder="请输入发布时间" id="time" >
+		</div>
+	
+	<div class="layui-form-item">
+		<div class="layui-input-block">
+			<button class="layui-btn" lay-submit lay-filter="add">添加公告</button>
+		</div>
+	</div>
+
+
+</form>
+</div>
+
+<script>
+	layui.use(['form', 'laydate'], function(){
+		var form = layui.form,
+		laydate = layui.laydate;
+	
+		laydate.render({elem: '#time', type: 'date'});
+		form.render();//渲染 单选框  layui中单选框是不会被自动渲染的 ，需要在显示之前进行手动渲染
+		
+	
+		
+		// 表单的提交操作, 改成异步请求的提交
+		form.on('submit(add)', function(data){
+			
+			//alert(JSON.stringify(data.field));
+			// ajax
+		
+			$.ajax({
+				url : '/notice/add',	// 请求的路径
+				data : data.field,		// 传递的参数
+				type : 'post',			// 请求的方式
+				dataType : 'json',		// 返回的类型
+				success : function(data){// 成功的回调
+					
+					if (data.code == 0){
+						// 成功了, 跳转到列表
+						gotoURL('/notice/list');
+					} else {
+						// 失败了
+						layer.msg(data.msg);
+					}
+				},
+				error : function(){		// 失败的回调
+					layer.msg("请求失败");
+				}
+			});
+			
+			return false;	// 阻止原来的表单提交动作.
+		});
+		
+	});
+</script>
+

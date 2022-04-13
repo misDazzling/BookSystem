@@ -1,0 +1,253 @@
+
+<h3>图书列表</h3>
+
+<form class="layui-form" action="">
+
+	<div class="layui-form-item">
+		
+		<div class="layui-input-inline">
+			<input type="text" name="key" class="layui-input" placeholder="请输入查询关键字">
+		</div>
+		<div class="layui-input-inline">
+			<select name="type_id">
+				<option value="">请选择分类</option>
+				<option th:each="type : ${types}" th:value="${type.id}" th:text="${type.name}"></option>
+			</select>
+		</div>
+		<div class="layui-input-inline">
+			<button class="layui-btn" lay-submit lay-filter="search">搜索</button>
+		</div>
+	</div>
+</form>
+
+<!-- 显示图书的表格 -->
+<table id="book" lay-filter="book"></table>
+
+<!-- 修改的表单 -->
+<script type="text/html" id="edit">
+	<form class="layui-form" id="edit-form">
+       
+		<input type="hidden" name="id" >
+		<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">图书名</label>
+		<div class="layui-input-inline">
+			<input type="text" name="title" class="layui-input"
+				placeholder="请输入图书名">
+		</div>
+	</div>
+
+	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">价格</label>
+		<div class="layui-input-inline">
+			<input type="text" name="price" class="layui-input"
+				placeholder="请输入图书价格">
+		</div>
+	</div>
+	
+   <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">出版社</label>
+		<div class="layui-input-inline">
+			<input type="text" name="publish" class="layui-input"
+				placeholder="请输入图书出版社">
+		</div>
+	</div>
+	
+	 <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">出版时间</label>
+		<div class="layui-input-inline">
+			<input type="text" name="publish_time" class="layui-input"
+				 placeholder="请输入出版时间" id="publish_time">
+		</div>
+	</div>
+	
+   	
+	 <!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">作者</label>
+		<div class="layui-input-inline">
+			<input type="text" name="authors" class="layui-input"
+				 placeholder="请输入作者" >
+		</div>
+	</div>
+
+	<!-- 一个行 -->
+	<div class="layui-form-item">
+		<label class="layui-form-label">图书分类</label>
+		<div class="layui-input-inline">
+			<select name="type_id" lay-filter="type_id"> 
+				<option value="">请选择</option>
+				<option th:each="type : ${types}"
+					 th:value="${type.id}" 
+					 th:text="${type.name}"></option>
+			</select>
+		</div>
+	</div>
+   
+		
+		<div class="layui-from-item">
+			<div class="layui-input-block">
+				<button class="layui-btn" lay-submit lay-filter="edit" >修改图书</button>
+			</div>
+		</div>
+	</form>
+</script>
+
+<!-- 删除和编辑按钮 -->
+<script type="text/html" id="bar">
+	<a class="layui-btn layui-btn-sm layui-btn-danger" lay-event="delete">删除</a>
+	<a class="layui-btn layui-btn-sm" lay-event="edit">编辑</a>
+</script>
+
+<!-- JS -->
+<script type="text/javascript">
+	layui.use(['table', 'form','laydate'], function(){
+		var table = layui.table,
+		form = layui.form;
+         
+		form.render();
+		
+		form.on('submit(search)', function(obj){
+						
+			// 刷新表格
+			table.reload('book', {
+				where: obj.field,
+				page: {curr : 1}	// 从第1页开始
+			});
+			
+			
+			return false;
+		});
+		
+		table.render({
+			elem : '#book',
+			url : '/book/list',
+			method : 'post',
+			page : true,
+			cols : [ [	// 两个方括号中间一定要有一个空格
+				{field: 'id', title: 'ID'},
+				{field: 'title', title: '图书名称'},
+				{field: 'price', title: '价格'},
+				{field: 'publish', title: '出版社'},
+				{field: 'publish_time', title: '出版时间'},
+				{field: 'authors', title: '作者'},
+				{field: 'type_name', title: '分类'},
+				{title: '操作', toolbar: '#bar', width: 150, fixed: 'right'},
+			] ],
+			parseData : function (res){
+				return {'code' : res.code,
+					'msg' : res.msg,
+					'count' : res.data.total,
+					'data' : res.data.list,
+					}
+				
+			}
+		});
+		
+		// 绑定事件
+		table.on('tool(book)', function(obj){
+			if (obj.event == 'delete'){
+				// 删除操作
+				//alert('删除' + JSON.stringify(obj.data.id))
+				layer.confirm('你确定要删除这一条么!', function(index){
+					// 通过ajax 向服务器发送请求, 完成删除操作
+					$.ajax({
+						url : '/book/delete',	// 请求的地址 
+						data : {id: obj.data.id},	// 传递的参数
+						type : 'post',	// 请求的类型
+						dataType : 'json',	// 返回的类型
+						success : function(data){
+							if (data.code == 0){
+								layer.msg('删除成功');
+							} else {
+								layer.msg('删除失败');
+							}
+							
+							// 刷新表格
+							table.reload('book', {
+								where: obj.field,
+								
+							});
+							
+							
+							
+						},	// 成功的回调
+						error : function(){
+							alert("请求失败");
+						}	// 失败的回调
+					});
+					
+					// 关闭
+					layer.close(index);
+					
+				});
+			} else if (obj.event == 'edit'){
+				// 弹出的窗口
+				var layIndex = layer.open({
+					type: 1,
+					title: '编辑图书',
+					content: $('#edit').html(),
+				});
+				laydate = layui.laydate;
+				
+				laydate.render({elem: '#publish_time', type: 'date'});
+				// 数据应该是obj.data
+				$("#edit-form input[name='id']").val(obj.data.id);
+				$("#edit-form input[name='title']").val(obj.data.title);
+				$("#edit-form input[name='price']").val(obj.data.price);
+				$("#edit-form input[name='publish']").val(obj.data.publish);
+				$("#edit-form input[name='publish_time']").val(obj.data.publish_time);
+				$("#edit-form input[name='authors']").val(obj.data.authors);
+				// 选中指定的类型
+				$("#edit-form select[name='type_id'] option[value='"+obj.data.type_id+"']").attr("selected", "selected");
+				// 获取当前分类的图书信息
+				$.ajax({
+					url : '/book/getByType',
+					data : {type_id: obj.data.type_id},
+					type : 'post',
+					dataType : 'json',
+					success : function (data){
+						var html = "<option value=''>请选择</option>";
+						
+				
+						
+						$("#edit-form select[name='name']").html(html);
+						
+						form.render();
+						// 编写表单提交事件
+						form.on('submit(edit)', function(data){
+							
+							$.ajax({
+								url : '/book/edit',
+								data : data.field,
+								type : 'post',
+								dataType : 'json',
+								success : function(data){
+									// 判断成功失败
+									if (data.code == 0){
+										layer.close(layIndex);
+									} else {
+										layer.msg(data.msg);
+									}
+									
+									// 刷新表格
+									table.reload("book");
+								},
+								error : function(){
+									alert("请求失败");
+								}
+							});
+							
+							return false;
+						});
+					}
+				});
+				
+				form.render();
+			}
+		});
+	});
+</script>
